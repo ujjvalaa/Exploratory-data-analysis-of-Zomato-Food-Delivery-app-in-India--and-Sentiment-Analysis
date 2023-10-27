@@ -1,0 +1,153 @@
+#ANALYSING REVIEWS
+
+all_ratings = []
+
+for name,ratings in tqdm(zip(data1['name'],data1['reviews_list'])):
+    ratings = eval(ratings)
+    for score, doc in ratings:
+        if score:
+            score = score.strip("Rated").strip()
+            doc = doc.strip('RATED').strip()
+            score = float(score)
+            all_ratings.append([name,score, doc])
+
+rating_df=pd.DataFrame(all_ratings,columns=['name','rating','review'])
+rating_df['review']=rating_df['review'].apply(lambda x : re.sub('[^a-zA-Z0-9\s]',"",x))
+
+rating_df.to_csv("Ratings.csv")
+
+rating_df.head()
+
+rest=data1['name'].value_counts()[:9].index
+def produce_wordcloud(rest):
+
+    plt.figure(figsize=(20,30))
+    for i,r in enumerate(rest):
+        plt.subplot(3,3,i+1)
+        corpus=rating_df[rating_df['name']==r]['review'].values.tolist()
+        corpus=' '.join(x  for x in corpus)
+        wordcloud = WordCloud(max_font_size=None, background_color='white', collocations=False,
+                      width=1500, height=1500).generate(corpus)
+        plt.imshow(wordcloud)
+        plt.title(r)
+        plt.axis("off")
+
+
+
+
+produce_wordcloud(rest)
+
+#@title LSTM MODEL
+
+rating_df['sent']=rating_df['rating'].apply(lambda x: 1 if int(x)>2.5 else 0)
+rating_df
+
+
+
+
+
+
+
+
+
+
+
+
+
+#word tokenizing
+'''text=final['review'][0]
+print(text)
+print(word_tokenize(text))
+print(len(word_tokenize(text)))'''
+
+'''corpus=[]
+for text in final['review'][:50000]:
+  words=[word.lower() for word in word_tokenize(text)]
+  corpus.append(words)'''
+
+'''p=len(corpus)
+print(p)'''
+
+#splitting data to train and test ( 80:20)
+'''train_size=int(50000*0.8)
+x_train=final.review[:train_size]
+y_train=final.review[:train_size]
+x_test=final.review[train_size:p]
+y_test=final.review[train_size:p]
+print(len(final.review[train_size:p]))
+print(p-train_size)'''
+
+#tokenizing works  and padding for equal input dimensions
+'''tokenizer=Tokenizer(p)
+tokenizer.fit_on_texts(x_train)
+x_train=tokenizer.texts_to_sequences(x_train)
+x_train=pad_sequences(x_train,maxlen=140,truncating='post',padding='post')'''
+
+#x_train[0],len(x_train[0])
+
+'''x_test=tokenizer.texts_to_sequences(x_test)
+x_test=pad_sequences(x_test,maxlen=140,truncating='post',padding='post')'''
+
+'''print(x_train.shape,y_train.shape)
+print(x_test.shape,y_test.shape)'''
+
+max_features=3000
+tokenizer=Tokenizer(num_words=max_features,split=' ')
+tokenizer.fit_on_texts(rating_df['review'][:50000].values)
+X = tokenizer.texts_to_sequences(rating_df['review'][:50000].values)
+X = pad_sequences(X)
+
+embed_dim = 32
+lstm_out = 32
+
+model = Sequential()
+model.add(Embedding(max_features, embed_dim,input_length = X.shape[1]))
+#model.add(SpatialDropout1D(0.4))
+model.add(LSTM(lstm_out, dropout=0.2, recurrent_dropout=0.2))
+model.add(Dense(2,activation='softmax'))
+
+model.compile(loss = 'categorical_crossentropy', optimizer='adam',metrics = ['accuracy'])
+print(model.summary())
+
+Y = pd.get_dummies(rating_df['sent'][:50000].astype(int)).values
+X_train, X_test, Y_train, Y_test = train_test_split(X,Y, test_size = 0.33, random_state = 42)
+print(X_train.shape,Y_train.shape)
+print(X_test.shape,Y_test.shape)
+
+batch_size = 2000
+model.fit(X_train, Y_train, epochs = 5, batch_size=batch_size,validation_data=(X_test,Y_test))
+
+validation_size = 1500
+
+X_validate = X_test[-validation_size:]
+Y_validate = Y_test[-validation_size:]
+X_test = X_test[:-validation_size]
+Y_test = Y_test[:-validation_size]
+score,acc = model.evaluate(X_test, Y_test, verbose = 2, batch_size = batch_size)
+print("score: %.2f" % (score))
+print("acc: %.2f" % (acc))
+
+valid_sen=['the food was better']
+valid_sen_token=tokenizer.texts_to_sequences(valid_sen)
+valid_sen_padded=pad_sequences(valid_sen_token,maxlen=60,truncating='post',padding='post')
+print(valid_sen[0])
+print('probability of positive:{}'.format(model.predict(valid_sen_padded)[0]))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
