@@ -1,0 +1,329 @@
+from google.colab import drive
+drive.mount('/content/drive')
+
+data=pd.read_csv('/content/drive/MyDrive/zomato.csv')
+
+
+
+from google.colab import drive
+drive.mount('/content/drive')
+
+data.info()
+
+#deleting inessential columns
+#dropping the column "dish_liked","phone","URL".
+data1=data.drop(['phone'],axis=1)
+
+#remove duplicates
+data1.duplicated().sum()
+data1.drop_duplicates(inplace=True)
+
+#remove nulll values from data
+data1.isnull().sum()
+data1.dropna(how='any',inplace=True)
+
+data1.info()
+
+#rename longer length columns
+data1=data1.rename(columns={ 'approx_cost(for two people)':'cost2p','listed_in(type)':'typefood','listed_in(city)':'city'})
+data1.columns
+
+#transformations
+#change datatype of cost to string
+data1['cost2p']=data1['cost2p'].astype(str)
+#using lambda function to replace ',' with ''
+data1['cost2p']=data1['cost2p'].apply(lambda x:x.replace(',',''))
+#change cost to float
+data1['cost2p']=data1['cost2p'].astype(float)
+data1.info()
+
+#reading the distinct ratings
+data1['rate'].unique()
+
+def handle(value):
+    if value=='NEW'or value=='-':
+        return np.nan
+    else:
+        value=str(value).split('/')
+        value=value[0]
+        return float(value)
+data1['rate']=data1['rate'].apply(handle)
+data1['rate'].head()
+
+data1['rate'].unique()
+
+#adjusting column names
+data1.name=data1.name.apply(lambda x:x.title())
+data1.online_order.replace(('Yes','No'),(True,False),inplace=True)
+data1.book_table.replace(('Yes','No'),(True,False),inplace=True)
+data1.cost2p.unique()
+
+#encode the input variables
+def Encode(data1):
+    for column in data1.columns[~data1.columns.isin(['rate','cost2p','votes'])]:
+        data1[column]=data1[column].factorize()[0]
+    return data1
+data1_en=Encode(data1.copy())
+data1_en
+
+###analysis
+
+#encode the input variables
+def Encode(data1):
+    for column in data1.columns[~data1.columns.isin(['rate','cost2p','votes'])]:
+        data1[column]=data1[column].factorize()[0]
+    return data1
+data1_en=Encode(data1.copy())
+data1_en
+
+#VISUALIZATION
+
+sns.countplot(data1['online_order'])
+fig=plt.gcf()
+fig.set_size_inches(10,10)
+plt.title('online order or not',size=30)
+
+sns.countplot(data1['book_table'])
+fig=plt.gcf()
+fig.set_size_inches(10,10)
+plt.title('Restaurants providing reserving tables facility',fontsize=30)
+
+plt.figure(figsize=(10,7))
+sns.scatterplot(x="rate",y='cost2p',hue='online_order',data=data1)
+plt.title('Rating vs cost of food',fontsize=30)
+plt.show()
+
+plt.figure(figsize=(6,6))
+sns.distplot(data1['cost2p'])
+plt.title("distributing of cost for two people",fontsize='30')
+plt.show()
+
+sns.countplot(data1['city'])
+sns.countplot(data1['city']).set_xticklabels(sns.countplot(data1['city']).get_xticklabels(),rotation=90,ha='right')
+fig=plt.gcf()
+fig.set_size_inches(14,14)
+plt.title("FOODIE AREAS",fontsize=30)
+
+plt.figure(figsize=(7,7))
+cuisines=data1['cuisines'].value_counts()[:10]
+sns.barplot(cuisines,cuisines.index,palette='rocket')
+plt.xlabel('Count')
+plt.title("Most popular cuisines of Bangalore")
+
+sns.countplot(data1['rest_type'])
+
+sns.countplot(data1['rest_type']).set_xticklabels(sns.countplot(data1['rest_type']).get_xticklabels(),rotation=90,ha='right')
+fig=plt.gcf()
+fig.set_size_inches(16,12)
+plt.title("Restaurant Type",fontsize=30)
+
+sns.countplot(data1['typefood'])
+sns.countplot(data1['typefood'])
+sns.countplot(data1['typefood']).set_xticklabels(sns.countplot(data1['typefood']).get_xticklabels())
+fig=plt.gcf()
+fig.set_size_inches(14,14)
+plt.title("Type of food served",fontsize=30)
+
+type_plt=pd.crosstab(data1['rate'],data1['typefood'])
+type_plt.plot(kind='bar',stacked=True,figsize=(14,14))
+
+plt.title('Type vs Rating',fontsize=30)
+plt.ylabel('restaruant offering type',fontsize=15)
+
+plt.xlabel('rating',fontsize=20)
+plt.xticks(fontsize=10)
+plt.yticks(fontsize=10)
+
+sns.countplot(data1['cost2p'])
+
+sns.countplot(data1['cost2p']).set_xticklabels(sns.countplot(data1['cost2p']).get_xticklabels(),rotation=90,ha='right')
+fig=plt.gcf()
+fig.set_size_inches(14,14)
+plt.title("cost of the restaurant ",fontsize=30)
+plt.xlabel('cost',fontsize=15)
+plt.ylabel('count',fontsize=15)
+
+fig=plt.figure(figsize=(20,14))
+loc=sns.countplot(x='location',data=data1,palette='Set1')
+loc.set_xticklabels(loc.get_xticklabels(),rotation=90,ha='right')
+plt.ylabel('frequency',size=20)
+plt.xlabel('location',size=20)
+loc
+plt.title('Number of restaurants in a location',size=30)
+
+plt.figure(figsize=(18,18))
+chains=data1['name'].value_counts()[0:20]
+sns.barplot(x=chains,y=chains.index,palette='Set2')
+plt.title('most famous restaurant chains',size=30)
+plt.xlabel("number of outlets",size=15)
+
+plt.figure(figsize=(7,7))
+cuisines=data1['cuisines'].value_counts()[:10]
+sns.barplot(cuisines,cuisines.index)
+plt.xlabel('Count')
+plt.title("Most popular cuisines of Bangalore")
+
+plt.figure(figsize=(15,15))
+
+sns.barplot(x=data1['rate'],y=data1['cost2p'],palette='Set2')
+plt.title('Rate vs Cost',size=30)
+plt.xlabel("Rate",size=15)
+plt.ylabel("Cost",size=15)
+
+#word cloud
+
+data1['dish_liked']=data1['dish_liked'].apply(lambda x : x.split(',') if type(x)==str else [''])
+
+rest=data1['rest_type'].value_counts()[:9].index
+def produce_wordcloud(rest):
+
+    plt.figure(figsize=(20,30))
+    for i,r in enumerate(rest):
+        plt.subplot(3,3,i+1)
+        corpus=data1[data1['rest_type']==r]['dish_liked'].values.tolist()
+        corpus=','.join(x  for list_words in corpus for x in list_words)
+        wordcloud = WordCloud(max_font_size=None, background_color='white', collocations=False,
+                      width=1500, height=1500).generate(corpus)
+        plt.imshow(wordcloud)
+        plt.title(r)
+        plt.axis("off")
+
+
+
+
+produce_wordcloud(rest)
+
+#heat map
+
+locations=pd.DataFrame({"Name":data1['location'].unique()})
+locations['Name']=locations['Name'].apply(lambda x: "Bangalore " + str(x))
+lat_lon=[]
+geolocator=Nominatim(user_agent="app")
+for location in locations['Name']:
+    location = geolocator.geocode(location)
+    if location is None:
+        lat_lon.append(np.nan)
+    else:
+        geo=(location.latitude,location.longitude)
+        lat_lon.append(geo)
+
+
+locations['geo_loc']=lat_lon
+locations.to_csv('locations.csv',index=False)
+
+locations["Name"]=locations['Name'].apply(lambda x :  x.replace("Bangalore","")[1:])
+locations.head()
+#We have found out latitude and longitude of each location listed in the dataset using geopy.
+#This is used to plot maps.
+
+#heatmap of restaurant on each location
+Rest_locations=pd.DataFrame(data1['location'].value_counts().reset_index())
+Rest_locations.columns=['Name','count']
+Rest_locations=Rest_locations.merge(locations,on='Name',how="left").dropna()
+Rest_locations['count'].max()
+
+def generateBaseMap(default_location=[12.97, 77.59], default_zoom_start=12):
+    base_map = folium.Map(location=default_location, control_scale=True, zoom_start=default_zoom_start)
+    return base_map
+
+lat,lon=zip(*np.array(Rest_locations['geo_loc']))
+Rest_locations['lat']=lat
+Rest_locations['lon']=lon
+basemap=generateBaseMap()
+HeatMap(Rest_locations[['lat','lon','count']].values.tolist(),radius=15).add_to(basemap)
+
+basemap
+
+'''It is clear that restaurants tend to concentrate in central bangalore area.
+The clutter of restaurants lowers are we move away from central.
+So,potential restaurant entrepreneurs can refer this and find out good locations for their venture.'''
+
+#heat map of north indian restaurants
+
+def produce_data(col,name):
+    data= pd.DataFrame(data1[data1[col]==name].groupby(['location'],as_index=False)['url'].agg('count'))
+    data.columns=['Name','count']
+    print(data.head())
+    data=data.merge(locations,on="Name",how='left').dropna()
+    data['lan'],data['lon']=zip(*data['geo_loc'].values)
+    return data.drop(['geo_loc'],axis=1)
+
+North_India=produce_data('cuisines','North Indian')
+
+basemap=generateBaseMap()
+HeatMap(North_India[['lan','lon','count']].values.tolist(),radius=15).add_to(basemap)
+basemap
+
+#heat map of sounth indian cuisines
+
+food=produce_data('cuisines','South Indian')
+basemap=generateBaseMap()
+HeatMap(food[['lan','lon','count']].values.tolist(),radius=15).add_to(basemap)
+basemap
+
+#analysing restaurants chains
+
+def produce_chains(name):
+    data_chain=pd.DataFrame(data1[data1["name"]==name]['location'].value_counts().reset_index())
+    data_chain.columns=['Name','count']
+    data_chain=data_chain.merge(locations,on="Name",how="left").dropna()
+    data_chain['lan'],data_chain['lon']=zip(*data_chain['geo_loc'].values)
+    return data_chain[['Name','count','lan','lon']]
+
+df_1=data1.groupby(['rest_type','name']).agg('count')
+datas=df_1.sort_values(['url'],ascending=False).groupby(['rest_type'],
+                as_index=False).apply(lambda x : x.sort_values(by="url",ascending=False).head(3))['url'].reset_index().rename(columns={'url':'count'})
+
+mapbox_access_token="pk.eyJ1Ijoic2hhaHVsZXMiLCJhIjoiY2p4ZTE5NGloMDc2YjNyczBhcDBnZnA5aCJ9.psBECQ2nub0o25PgHcU88w"
+
+#popular casual restaurant chains
+
+casual=datas[datas['rest_type']=='Casual Dining']
+casual
+
+def produce_trace(data_chain,name):
+        data_chain['text']=data_chain['Name']+'<br>'+data_chain['count'].astype(str)
+        trace =  go.Scattermapbox(
+
+                lat=data_chain['lan'],
+                lon=data_chain['lon'],
+                mode='markers',
+                marker=go.scattermapbox.Marker(
+                    size=data_chain['count']*4
+                ),
+                text=data_chain['text'],name=name
+            )
+
+        return trace
+
+data=[]
+for row in casual['name']:
+    data_chain=produce_chains(row)
+    trace_0=produce_trace(data_chain,row)
+    data.append(trace_0)
+
+
+
+layout = go.Layout(title="Casual Dining Restaurant chains locations around Banglore",
+    autosize=True,
+    hovermode='closest',
+    mapbox=dict(
+        accesstoken=mapbox_access_token,
+        bearing=0,style="streets",
+        center=dict(
+            lat=12.96,
+            lon=77.59
+        ),
+        pitch=0,
+
+    ),
+)
+
+
+fig = dict(data=data, layout=layout)
+py.iplot(fig, filename='Montreal Mapbox')
+
+#top quick bites restaurant chains
+
+quick=datas[datas['rest_type']=='Quick Bites']
+quick
