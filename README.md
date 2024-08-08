@@ -1,4 +1,6 @@
 **Project Overview**
+
+(This project was done way back in 2021)
 This data science project focuses on the analysis of the food industry, specifically centered around the behavior of people, their food preferences, and the prediction of food-related businesses. The dataset used for this analysis is sourced from Zomato, one of the most successful food delivery apps, based in Bengaluru, India. Bengaluru was chosen as the focal city for its diverse population with unique regional tastes, making it an ideal location to explore a wide range of preferences.
 Python, along with its pre-defined libraries, is employed for data analysis, visualization, and sentiment analysis. The project encompasses a variety of aspects, including:
 
